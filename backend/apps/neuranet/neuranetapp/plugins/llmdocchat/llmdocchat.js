@@ -90,14 +90,15 @@ exports.answer = async (params) => {
 
 	const languageDetectedForQuestion =  langdetector.getISOLang(params.question)
 
+	const validateDocumentsOrFiles = (fileOrDocArray) => fileOrDocArray && fileOrDocArray.length !=0;
 	const documentResultsForPrompt = params.documents;	// if no documents found, short-circuit with no knowledge error
-	if ((!documentResultsForPrompt) || (!documentResultsForPrompt.length)) {
+	if (!validateDocumentsOrFiles(documentResultsForPrompt) && !validateDocumentsOrFiles(params.files)) {
 		const errMsg = "No knowledge of this topic."; LOG.error(errMsg); 
 		params.return_error(errMsg, REASONS.NOKNOWLEDGE); return;
 	}
 	
 	const documentsForPrompt = [], metadatasForResponse = []; 
-	for (const [i,documentResult] of documentResultsForPrompt.entries()) {
+	if(validateDocumentsOrFiles(documentResultsForPrompt)) for (const [i,documentResult] of documentResultsForPrompt.entries()) {
 		documentsForPrompt.push({content: documentResult.text, document_index: i+1}); 
 		const metadataThis = serverutils.clone(documentResult.metadata);
 		if (params.matchers_for_reference_links && metadataThis[NEURANET_CONSTANTS.REFERENCELINK_METADATA_KEY]) 
@@ -107,7 +108,7 @@ exports.answer = async (params) => {
 		}
 		metadatasForResponse.push(metadataThis) 
 	};
-	let filesForPrompt = undefined; if (params.files) for (const file of params.files) {
+	let filesForPrompt = undefined; if (validateDocumentsOrFiles(params.files)) for (const file of params.files) {
 		const textsteam = await textextractor.extractTextAsStreams(Readable.from(Buffer.from(file.bytes64, "base64")), file.filename);
 		const text = await neuranetutils.readFullFile(textsteam, "utf8");
 		if (text) {
