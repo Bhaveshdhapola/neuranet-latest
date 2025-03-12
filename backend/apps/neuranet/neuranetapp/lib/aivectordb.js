@@ -207,14 +207,14 @@ exports.update = async (oldmetadata, newmetadata, db_path) => {
  * @param {string} db_path The DB path where this DB is stored. Must be a folder.
  * @throws Exception on errors 
  */
-exports.delete = async (vector, metadata, db_path) => {
-    const dbToUse = dbs[_get_db_hash(db_path)], vectorhash = _get_vector_hash(vector, metadata, dbToUse); 
+exports.delete = async (vectorHash, metadata, db_path) => {
+    const dbToUse = dbs[_get_db_hash(db_path)];
 
     try {
-        await _deleteVectorObject(db_path, vectorhash, metadata); 
+        await _deleteVectorObject(db_path, vectorHash, metadata); 
         return true;
     } catch (err) {
-        _log_error(`Vector or the associated text file ${_getTextfilePathForVector(dbToUse, vectorhash)} could not be deleted`, db_path, err);
+        _log_error(`Vector or the associated text file ${_getTextfilePathForVector(dbToUse, vectorHash)} could not be deleted`, db_path, err);
         return false;
     }
 }
@@ -271,11 +271,11 @@ exports.query = async function(vectorToFindSimilarTo, topK, min_distance, metada
  * @param {string} db_path The DB path where this DB is stored. Must be a folder.
  */
 exports.uningest = async (metadata, db_path) => { 
-    const metadataToDelete = await _readMetadataObject(metadata);
+    const metadataToDelete = await _readMetadataObject(dbs[_get_db_hash(db_path)], metadata);
     if (!metadataToDelete) return;  // already doesn't exist, treat as success
 
-    const vectorsToDelete = metadataToDelete.vector_objects;
-    for (const vector of vectorsToDelete) await exports.delete(vector, metadata, db_path); 
+    const vectorHashesToDelete = metadataToDelete.vector_objects;
+    for (const vectorHash of vectorHashesToDelete) await exports.delete(vectorHash, metadata, db_path); 
 }
 
 /**
@@ -372,7 +372,7 @@ exports.get_vectordb = async function(db_path, embedding_generator, metadata_doc
                 embedding_generator, db_path),
         read: async (vector, metadata, notext) => exports.read(vector, metadata, notext, db_path),
         update: async (oldmetadata, newmetadata) => exports.update(oldmetadata, newmetadata, db_path),
-        delete: async (vector, metadata) =>  exports.delete(vector, metadata, db_path),    
+        delete: async (vector, metadata) =>  exports.delete(_get_vector_hash(vector), metadata, db_path),    
         uningest: async (metadata) => exports.uningest(metadata, db_path),
         query: async (vectorToFindSimilarTo, topK, min_distance, metadata_filter_function_or_metadata, notext) => exports.query(
             vectorToFindSimilarTo, topK, min_distance, metadata_filter_function_or_metadata, notext, db_path),
@@ -452,7 +452,7 @@ const _freeTempMemoryForIngestedData = (dbToUse, metadata) => delete TEMP_MEMORY
 const _getTempmemHash = (dbToUse, metadata)  => dbToUse.path+metadata[dbToUse[METADATA_DOCID_KEY_PROPERTY_NAME]];
 
 const _flushIngestedDataToDisk = async (dbToUse, metadata, rebuildIndex, freeTempMemory) => {
-    const temphash = _getTempmemHash(dbToUse, metadata), filesToWrite = TEMP_MEMORY[temphash]?.files||[];
+    const temphash = _getTempmemHash(dbToUse, metadata), filesToWrite = TEMP_MEMORY[temphash].files;
     try {
         for (const file of filesToWrite) await memfs.writeFile(file.path, file.data, file.encoding||"utf8"); 
         if (rebuildIndex) await memfs.writeFile(_getFilePathForMetadata(dbToUse, metadata), JSON.stringify(TEMP_MEMORY[temphash].mdObject||{}), "utf8"); 
