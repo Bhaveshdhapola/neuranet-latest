@@ -452,7 +452,7 @@ const _freeTempMemoryForIngestedData = (dbToUse, metadata) => delete TEMP_MEMORY
 const _getTempmemHash = (dbToUse, metadata)  => dbToUse.path+metadata[dbToUse[METADATA_DOCID_KEY_PROPERTY_NAME]];
 
 const _flushIngestedDataToDisk = async (dbToUse, metadata, rebuildIndex, freeTempMemory) => {
-    const temphash = _getTempmemHash(dbToUse, metadata), filesToWrite = TEMP_MEMORY[temphash].files;
+    const temphash = _getTempmemHash(dbToUse, metadata), filesToWrite = TEMP_MEMORY[temphash]?.files||[];
     try {
         for (const file of filesToWrite) await memfs.writeFile(file.path, file.data, file.encoding||"utf8"); 
         if (rebuildIndex) await memfs.writeFile(_getFilePathForMetadata(dbToUse, metadata), JSON.stringify(TEMP_MEMORY[temphash].mdObject||{}), "utf8"); 
