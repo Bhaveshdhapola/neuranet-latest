@@ -4,5 +4,8 @@
     "secure":   true,
     "user":     "noreply@teleworkr.com",
     "password": "34f50ed4231b14a06c95d5eac83fcefc1b8f70c4f0a5ef5be4517f3675ea04fdc35d0f3aace4ad664017bde7ac84110f0d8028b4a947ac7e84fe",
-    "from":     "noreply@teleworkr.com"
+    "from":     "noreply@teleworkr.com",
+    "domain":   "teleworkr.com",
+    "apikey":   "191c518df10ba6e6f487d6bf66180248b0a0531332846283cf04d0f3c52eedc5ceadb0759860fd9020938795e36de2582913483360c4141032b7",
+    "useMailGunApi": true
 }
