@@ -198,13 +198,13 @@ exports.initNewAIAppForOrg = async function(aiappid, label, id, org) {
         });
         if (result) {
             const aidbfs = require(`${NEURANET_CONSTANTS.LIBDIR}/aidbfs.js`);   // avoid cyclic requires
-            const aidbRoot = `${NEURANET_CONSTANTS.AIDBPATH}/${aidbfs.getDBID(id, org, aiappid)}`;
-            const appdbFolderPath = `${aidbRoot}/${aiappid}`;  // create ai app's DB dir for Ai DBs
+            const aidbRoot = `${NEURANET_CONSTANTS.AIDBPATH}`;
+            const appdbFolderPath = `${aidbRoot}/${aidbfs.getDBID(id, org, aiappid)}`;  // create ai app's DB dir for Ai DBs
             await serverutils.createDirectory(appdbFolderPath);
             result = await dblayer.addOrUpdateAIAppForOrg(org, aiappid, exports.AIAPP_STATUS.UNPUBLISHED);
         } else {
             LOG.error(`DB update for AI app ${aiappid} for org ${org} failed.`);
-            try {await utils.rmrf(newAppDir);} catch (err) {LOG.error(`Error ${err} cleaning up ${newAppDir} for org ${org}.`);}
+            try {await serverutils.rmrf(newAppDir);} catch (err) {LOG.error(`Error ${err} cleaning up ${newAppDir} for org ${org}.`);}
         }
         return result;
     } catch (err) {
@@ -225,8 +225,8 @@ exports.deleteAIAppForOrg = async function (aiappid, id, org) {
     const appDir = exports.getAppDir(id, org, aiappid);
     aiappid = aiappid.toLowerCase(); org = org.toLowerCase();
     const aidbfs = require(`${NEURANET_CONSTANTS.LIBDIR}/aidbfs.js`);   // avoid cyclic requires
-    const aidbRoot = `${NEURANET_CONSTANTS.AIDBPATH}/${aidbfs.getDBID(id, org, aiappid)}`;
-    const appdbArchiveDirPath = `${aidbRoot}/archive`, appdbFolderPath = `${aidbRoot}/${aiappid}`;  // save uploaded data
+    const aidbRoot = `${NEURANET_CONSTANTS.AIDBPATH}`;
+    const appdbArchiveDirPath = `${aidbRoot}/archive`, appdbFolderPath = `${aidbRoot}/${aidbfs.getDBID(id, org, aiappid)}`;  // save uploaded data
     const zipFilePath = `${appdbArchiveDirPath}/${aiappid}.zip`;
     let result; 
     try {
